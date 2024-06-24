@@ -126,8 +126,6 @@ print(train_data['TARGET'].value_counts())
 # Feature Selection by using the importance parameter
 X = train_data.drop(columns=['uid', 'TARGET', 'open_date', 'closed_date', 'enquiry_date', 'payment_hist_string'])
 y = train_data['TARGET']
-# model = RandomForestClassifier(n_estimators=100, random_state=42)
-# model.fit(X, y)
 # importances = model.feature_importances_
 # feature_importance_df = pd.DataFrame({'feature': X.columns, 'importance': importances})
 # feature_importance_df = feature_importance_df.sort_values(by='importance', ascending=False)
@@ -143,16 +141,16 @@ y = train_data['TARGET']
 X_test = test_data.drop(columns=['uid', 'open_date', 'closed_date', 'enquiry_date', 'payment_hist_string'])
 
 # Apply SMOTE and check the distributions
-# smote = SMOTE(random_state=42)
-# X_balanced, y_balanced = smote.fit_resample(X, y)
+smote = SMOTE(random_state=42)
+X_balanced, y_balanced = smote.fit_resample(X, y)
 
 # sns.countplot(x=y_balanced)
 # plt.title('Distribution of Target Variable After SMOTE')
 # plt.show()
-# print(y_balanced.value_counts())
+print(y_balanced.value_counts())
 
 # Spliting the data into train and validation and then providing the result on the test data
-X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42)
+X_train, X_val, y_train, y_val = train_test_split(X_balanced, y_balanced, test_size=0.2, random_state=42)
 
 # Model training and evaluation
 models = {
@@ -162,20 +160,21 @@ models = {
 
 for model_name, model in models.items():
     model.fit(X_train, y_train)
-    y_pred = model.predict_proba(X_val)[:, 1]
+    y_pred = model.predict(X_val)[:, 1]
     roc_auc = roc_auc_score(y_val, y_pred)
     print(f'{model_name} Validation ROC AUC Score: {roc_auc}')
 
 # Select the best model based on ROC AUC score
 best_model = models['RandomForest']
-best_model.fit(X, y)
+best_model.fit(X_train, y_train)
 
 # Predict on test data
-test_predictions = best_model.predict_proba(X_test)[:, 1]
+# test_predictions = best_model.predict_proba(X_test)[:, 1]
+test_predictions = best_model.predict(X_test)
 
 # Save predictions
 submission = pd.DataFrame({'uid': test_data['uid'], 'TARGET': test_predictions})
-submission.to_csv('final_submission_firstname_lastname.csv', index=False)
+submission.to_csv('final_submission_Pranav_Chaudhari.csv', index=False)
 
 
 # Tried it using Balanced dataset but due to more application memory required could not process it
